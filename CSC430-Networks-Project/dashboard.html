@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ProxyShield Admin Dashboard</title>
+  <link rel="icon" href="data:,">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:          #05080f;
+      --surface:     #0d1220;
+      --card:        #111827;
+      --border:      #1f2d45;
+      --accent:      #6366f1;
+      --accent-glow: rgba(99,102,241,0.25);
+      --accent2:     #8b5cf6;
+      --success:     #10b981;
+      --warning:     #f59e0b;
+      --danger:      #ef4444;
+      --text:        #f1f5f9;
+      --muted:       #64748b;
+      --radius:      14px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Animated gradient background orbs */
+    body::before, body::after {
+      content: '';
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(120px);
+      opacity: 0.15;
+      pointer-events: none;
+      z-index: 0;
+    }
+    body::before {
+      width: 600px; height: 600px;
+      background: radial-gradient(circle, #6366f1, transparent);
+      top: -200px; left: -200px;
+      animation: float1 12s ease-in-out infinite alternate;
+    }
+    body::after {
+      width: 400px; height: 400px;
+      background: radial-gradient(circle, #8b5cf6, transparent);
+      bottom: -100px; right: -100px;
+      animation: float2 15s ease-in-out infinite alternate;
+    }
+    @keyframes float1 { to { transform: translate(80px, 80px); } }
+    @keyframes float2 { to { transform: translate(-60px, -60px); } }
+
+    /* ---- Layout ---- */
+    .app { position: relative; z-index: 1; display: flex; flex-direction: column; min-height: 100vh; }
+
+    /* ---- Top Bar ---- */
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 2rem;
+      background: rgba(13,18,32,0.85);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      position: sticky; top: 0; z-index: 100;
+    }
+    .logo { display: flex; align-items: center; gap: 12px; }
+    .logo-icon {
+      width: 38px; height: 38px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+      box-shadow: 0 0 20px var(--accent-glow);
+    }
+    .logo-text { font-weight: 700; font-size: 1.15rem; letter-spacing: -0.01em; }
+    .logo-sub { font-size: 0.7rem; color: var(--muted); letter-spacing: 0.05em; text-transform: uppercase; }
+
+    .status-pill.disconnected {
+      background: rgba(239,68,68,0.12);
+      border-color: rgba(239,68,68,0.3);
+      color: var(--danger);
+    }
+    .status-pill.disconnected .pulse-dot {
+      background: var(--danger);
+      animation: none;
+    }
+    .status-pill {
+      display: flex; align-items: center; gap: 8px;
+      background: rgba(16,185,129,0.12);
+      border: 1px solid rgba(16,185,129,0.3);
+      border-radius: 100px;
+      padding: 6px 14px;
+      font-size: 0.8rem; font-weight: 500; color: var(--success);
+    }
+    .pulse-dot {
+      width: 8px; height: 8px;
+      background: var(--success);
+      border-radius: 50%;
+      animation: pulse 2s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(16,185,129,0.7); }
+      50%       { box-shadow: 0 0 0 8px rgba(16,185,129,0); }
+    }
+
+    /* ---- Tabs ---- */
+    .tabs {
+      display: flex;
+      gap: 4px;
+      padding: 0 2rem;
+      background: rgba(13,18,32,0.6);
+      border-bottom: 1px solid var(--border);
+    }
+    .tab {
+      padding: 12px 20px;
+      font-size: 0.875rem; font-weight: 500;
+      color: var(--muted);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all 0.2s;
+      user-select: none;
+    }
+    .tab:hover { color: var(--text); }
+    .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+    /* ---- Main Content ---- */
+    .content { padding: 2rem; flex: 1; }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* ---- Stats Grid ---- */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.75rem;
+    }
+    .stat-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem 1.5rem;
+      transition: transform 0.25s, box-shadow 0.25s, border-color 0.25s;
+      position: relative;
+      overflow: hidden;
+    }
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      border-radius: var(--radius) var(--radius) 0 0;
+    }
+    .stat-card.accent::before  { background: linear-gradient(90deg, var(--accent), var(--accent2)); }
+    .stat-card.success::before { background: linear-gradient(90deg, var(--success), #34d399); }
+    .stat-card.warning::before { background: linear-gradient(90deg, var(--warning), #fbbf24); }
+    .stat-card.danger::before  { background: linear-gradient(90deg, var(--danger), #f87171); }
+    .stat-card.purple::before  { background: linear-gradient(90deg, var(--accent2), #c4b5fd); }
+
+    .stat-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.4);
+      border-color: rgba(99,102,241,0.3);
+    }
+    .stat-label { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.5rem; }
+    .stat-value { font-size: 2.2rem; font-weight: 700; line-height: 1; }
+    .stat-value.green  { color: var(--success); }
+    .stat-value.yellow { color: var(--warning); }
+    .stat-value.red    { color: var(--danger); }
+    .stat-value.purple { color: var(--accent2); }
+
+    /* ---- Cache Hit Rate Bar ---- */
+    .hit-rate-section {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      margin-bottom: 1.75rem;
+    }
+    .hit-rate-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+    .hit-rate-header h3 { font-size: 0.95rem; font-weight: 600; }
+    .hit-rate-pct { font-size: 1.5rem; font-weight: 700; color: var(--success); }
+    .progress-bar { background: var(--border); border-radius: 100px; height: 10px; overflow: hidden; }
+    .progress-fill {
+      height: 100%;
+      border-radius: 100px;
+      background: linear-gradient(90deg, var(--accent), var(--success));
+      transition: width 0.6s cubic-bezier(.4,0,.2,1);
+    }
+
+    /* ---- Log Panel ---- */
+    .panel {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .panel-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .panel-header h3 { font-size: 0.95rem; font-weight: 600; }
+    .log-box {
+      font-family: 'Courier New', monospace;
+      font-size: 0.78rem;
+      height: 380px;
+      overflow-y: auto;
+      padding: 1rem;
+      background: #07090f;
+    }
+    .log-line {
+      padding: 3px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      color: #94a3b8;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+    .log-line:hover { background: rgba(255,255,255,0.03); }
+    .log-line.hit    { color: #34d399; }
+    .log-line.miss   { color: #f59e0b; }
+    .log-line.block  { color: #f87171; }
+    .log-line.connect{ color: #818cf8; }
+    .log-line.error  { color: #ef4444; }
+
+    /* ---- Uptime Badge ---- */
+    .uptime-badge {
+      font-size: 0.78rem; color: var(--muted);
+      background: rgba(255,255,255,0.05);
+      border-radius: 6px; padding: 4px 10px;
+    }
+
+    /* ---- Cache Management ---- */
+    .cache-panel { display: grid; gap: 1.5rem; }
+    .info-row { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 0; border-bottom: 1px solid var(--border); }
+    .info-row:last-child { border-bottom: none; }
+    .info-key { color: var(--muted); font-size: 0.875rem; }
+    .info-val { font-weight: 600; }
+
+    /* ---- Cache Table ---- */
+    .table-container { overflow-x: auto; }
+    .cache-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; text-align: left; }
+    .cache-table th, .cache-table td { padding: 12px 16px; border-bottom: 1px solid var(--border); }
+    .cache-table th { color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.75rem; background: rgba(0,0,0,0.1); }
+    .cache-table tr:last-child td { border-bottom: none; }
+    .cache-table tr:hover { background: rgba(255,255,255,0.02); }
+    .cache-table td.url-col { max-width: 350px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text); }
+    .btn-sm { padding: 5px 12px; font-size: 0.75rem; }
+
+    /* ---- Buttons ---- */
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 9px 20px;
+      border-radius: 8px;
+      font-size: 0.85rem; font-weight: 600;
+      border: none; cursor: pointer;
+      transition: all 0.2s;
+      text-decoration: none;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #fff;
+      box-shadow: 0 4px 15px var(--accent-glow);
+    }
+    .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); box-shadow: 0 6px 20px var(--accent-glow); }
+    .btn-danger  { background: rgba(239,68,68,0.15); color: var(--danger); border: 1px solid rgba(239,68,68,0.3); }
+    .btn-danger:hover  { background: rgba(239,68,68,0.25); }
+    .btn-success { background: rgba(16,185,129,0.15); color: var(--success); border: 1px solid rgba(16,185,129,0.3); }
+    .btn-success:hover { background: rgba(16,185,129,0.25); }
+
+    /* ---- Security Rules ---- */
+    .rule-section { margin-bottom: 1.5rem; }
+    .rule-section h3 { font-size: 0.95rem; font-weight: 600; margin-bottom: 0.75rem; }
+    .rule-list {
+      background: #07090f;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      min-height: 80px;
+      padding: 0.5rem;
+      margin-bottom: 0.75rem;
+    }
+    .rule-chip {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(99,102,241,0.15);
+      border: 1px solid rgba(99,102,241,0.3);
+      border-radius: 100px;
+      padding: 4px 12px;
+      font-size: 0.8rem;
+      margin: 4px;
+      transition: background 0.2s;
+    }
+    .rule-chip.danger-chip {
+      background: rgba(239,68,68,0.12);
+      border-color: rgba(239,68,68,0.3);
+    }
+    .rule-chip .remove-btn {
+      cursor: pointer;
+      color: var(--muted);
+      font-size: 0.9rem;
+      line-height: 1;
+      transition: color 0.2s;
+    }
+    .rule-chip .remove-btn:hover { color: var(--danger); }
+    .empty-msg { color: var(--muted); font-size: 0.8rem; padding: 0.5rem; font-style: italic; }
+    .add-row { display: flex; gap: 8px; }
+    .add-row input {
+      flex: 1;
+      background: #07090f;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 14px;
+      color: var(--text);
+      font-size: 0.875rem;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .add-row input:focus { border-color: var(--accent); }
+    .add-row input::placeholder { color: var(--muted); }
+
+    /* ---- Toast Notification ---- */
+    #toast {
+      position: fixed; bottom: 2rem; right: 2rem;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 20px;
+      font-size: 0.875rem;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+      transform: translateY(100px); opacity: 0;
+      transition: all 0.3s cubic-bezier(.4,0,.2,1);
+      z-index: 9999;
+    }
+    #toast.show { transform: translateY(0); opacity: 1; }
+    #toast.success { border-color: rgba(16,185,129,0.4); color: var(--success); }
+    #toast.error   { border-color: rgba(239,68,68,0.4); color: var(--danger); }
+
+    /* ---- Login Overlay ---- */
+    #login-overlay {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(5,8,15,0.95); backdrop-filter: blur(10px);
+      display: none; align-items: center; justify-content: center;
+      z-index: 10000;
+    }
+    .login-box {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 2.5rem; width: 400px;
+      text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+    }
+    .login-box h2 { margin-bottom: 1rem; font-size: 1.5rem; }
+    .login-box p { color: var(--muted); margin-bottom: 2rem; font-size: 0.9rem; }
+    .login-input {
+      width: 100%; padding: 12px 16px; margin-bottom: 1rem;
+      background: #07090f; border: 1px solid var(--border);
+      border-radius: 8px; color: var(--text); font-size: 1rem; outline: none;
+    }
+    .login-input:focus { border-color: var(--accent); }
+    .login-btn { width: 100%; padding: 12px; font-size: 1rem; margin-top: 0.5rem; justify-content: center; }
+
+    /* ---- Scrollbar ---- */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 100px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <!-- Top Bar -->
+  <div class="topbar">
+    <div class="logo">
+      <div class="logo-icon">🛡</div>
+      <div>
+        <div class="logo-text">ProxyShield</div>
+        <div class="logo-sub">Admin Dashboard · CSC 430</div>
+      </div>
+    </div>
+    <div class="status-pill">
+      <div class="pulse-dot"></div>
+      <span id="uptime-top">Server Online</span>
+    </div>
+  </div>
+
+  <!-- Tab Nav -->
+  <div class="tabs">
+    <div class="tab active" data-tab="dashboard">📊 Dashboard</div>
+    <div class="tab" data-tab="cache">🗄 Cache</div>
+    <div class="tab" data-tab="security">🔒 Security Rules</div>
+    <div class="tab" data-tab="logs">📋 Live Logs</div>
+  </div>
+
+  <!-- ============================================================
+       TAB: DASHBOARD
+  ============================================================ -->
+  <div class="content">
+    <div id="tab-dashboard" class="tab-panel active">
+
+      <div class="stats-grid">
+        <div class="stat-card accent">
+          <div class="stat-label">Total Requests</div>
+          <div class="stat-value" id="total_requests">—</div>
+        </div>
+        <div class="stat-card success">
+          <div class="stat-label">Cache Hits</div>
+          <div class="stat-value green" id="cache_hits">—</div>
+        </div>
+        <div class="stat-card warning">
+          <div class="stat-label">Cache Misses</div>
+          <div class="stat-value yellow" id="cache_misses">—</div>
+        </div>
+        <div class="stat-card danger">
+          <div class="stat-label">Blocked</div>
+          <div class="stat-value red" id="blocked">—</div>
+        </div>
+        <div class="stat-card purple">
+          <div class="stat-label">Active Connections</div>
+          <div class="stat-value purple">
+            <span id="active_connections">—</span>
+            <small style="font-size: 0.9rem; opacity: 0.6; display: block; margin-top: 5px;">
+              Peak: <span id="peak_active_connections">0</span>
+            </small>
+          </div>
+        </div>
+      </div>
+
+      <!-- Cache Hit Rate -->
+      <div class="hit-rate-section">
+        <div class="hit-rate-header">
+          <h3>Cache Hit Rate</h3>
+          <span class="hit-rate-pct" id="hit-rate-pct">0%</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" id="hit-rate-bar" style="width:0%"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================================
+         TAB: CACHE
+    ============================================================ -->
+    <div id="tab-cache" class="tab-panel">
+      <div class="cache-panel">
+        <div class="panel">
+          <div class="panel-header">
+            <h3>Cache Status</h3>
+            <button class="btn btn-danger" id="clear-cache-btn">🗑 Clear All Cache</button>
+          </div>
+          <div style="padding: 1rem 1.5rem;">
+            <div class="info-row">
+              <span class="info-key">Status</span>
+              <span class="info-val" id="cache-status">—</span>
+            </div>
+            <div class="info-row">
+              <span class="info-key">Cached Entries</span>
+              <span class="info-val" id="cache-entries">—</span>
+            </div>
+            <div class="info-row">
+              <span class="info-key">Disk Usage</span>
+              <span class="info-val" id="cache-size">—</span>
+            </div>
+            <div class="info-row">
+              <span class="info-key">Default TTL</span>
+              <span class="info-val" id="cache-ttl">—</span>
+            </div>
+            <div class="info-row">
+              <span class="info-key">Proxy Port</span>
+              <span class="info-val" id="proxy-port">—</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <h3>Cached Items</h3>
+            <button class="btn btn-primary btn-sm" id="refresh-cache-btn">🔄 Refresh</button>
+          </div>
+          <div class="table-container">
+            <table class="cache-table">
+              <thead>
+                <tr>
+                  <th>URL</th>
+                  <th>Size</th>
+                  <th>TTL (sec)</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="cache-entries-body">
+                <tr><td colspan="4" style="text-align: center; color: var(--muted); padding: 2rem;">Loading...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ============================================================
+         TAB: SECURITY RULES
+    ============================================================ -->
+    <div id="tab-security" class="tab-panel">
+      <div style="display: grid; gap: 1.5rem;">
+        <div class="panel">
+          <div class="panel-header">
+            <h3>🚫 Blacklist — Blocked Domains</h3>
+            <button class="btn btn-success" id="save-rules-btn">💾 Save Rules</button>
+          </div>
+          <div style="padding: 1.25rem 1.5rem;">
+            <div class="rule-section">
+              <div class="rule-list" id="blacklist-chips">
+                <span class="empty-msg">No domains blocked.</span>
+              </div>
+              <div class="add-row">
+                <input id="bl-input" type="text" placeholder="e.g. ads.example.com" />
+                <button class="btn btn-danger" id="bl-add-btn">+ Add</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <h3>✅ Whitelist — Allowed Domains Only</h3>
+            <span class="uptime-badge">Leave empty to allow all</span>
+          </div>
+          <div style="padding: 1.25rem 1.5rem;">
+            <div class="rule-section">
+              <div class="rule-list" id="whitelist-chips">
+                <span class="empty-msg">No whitelist active — all non-blacklisted domains are allowed.</span>
+              </div>
+              <div class="add-row">
+                <input id="wl-input" type="text" placeholder="e.g. google.com" />
+                <button class="btn btn-primary" id="wl-add-btn">+ Add</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================================
+         TAB: LIVE LOGS
+    ============================================================ -->
+    <div id="tab-logs" class="tab-panel">
+      <div class="panel">
+        <div class="panel-header">
+          <h3>Live Request Log</h3>
+          <span class="uptime-badge" id="log-count">0 entries</span>
+        </div>
+        <div class="log-box" id="log-box">
+          <div class="log-line">Waiting for traffic…</div>
+        </div>
+      </div>
+    </div>
+  </div><!-- /content -->
+
+</div><!-- /app -->
+
+<div id="toast"></div>
+
+<!-- Login Overlay -->
+<div id="login-overlay">
+  <div class="login-box">
+    <div class="logo-icon" style="margin: 0 auto 1.5rem; width: 48px; height: 48px; font-size: 24px;">🛡</div>
+    <h2>Admin Login</h2>
+    <p>Please enter your proxy server credentials.</p>
+    <input type="text" id="login-user" class="login-input" placeholder="Username">
+    <input type="password" id="login-pass" class="login-input" placeholder="Password" onkeydown="if(event.key==='Enter') handleLogin()">
+    <button class="btn btn-primary login-btn" onclick="handleLogin()">Login</button>
+  </div>
+</div>
+
+<script>
+  // ==========================================================================
+  // Auth Wrapper
+  // ==========================================================================
+  const originalFetch = window.fetch;
+  window.fetch = async function(...args) {
+    let [resource, config] = args;
+    config = config || {};
+    config.headers = config.headers || {};
+    const creds = localStorage.getItem('proxy_admin_creds');
+    if (creds) {
+      config.headers['Authorization'] = 'Basic ' + creds;
+    }
+    try {
+      const response = await originalFetch(resource, config);
+      
+      // We got a response, so server is online
+      document.querySelector('.status-pill').classList.remove('disconnected');
+      
+      if (response.status === 401) {
+        document.getElementById('login-overlay').style.display = 'flex';
+        return new Response(JSON.stringify({success: false}), {status: 401});
+      }
+      return response;
+    } catch (err) {
+      if (!serverOffline) {
+        console.warn("Connection lost. Entering backoff mode.");
+        serverOffline = true;
+        document.querySelector('.status-pill').classList.add('disconnected');
+        document.getElementById('uptime-top').textContent = 'Server Offline';
+      }
+      throw err;
+    }
+  };
+
+  function handleLogin() {
+    const user = document.getElementById('login-user').value.trim();
+    const pass = document.getElementById('login-pass').value.trim();
+    if (!user || !pass) return;
+    const b64 = btoa(user + ':' + pass);
+    localStorage.setItem('proxy_admin_creds', b64);
+    document.getElementById('login-overlay').style.display = 'none';
+    
+    // Clear inputs
+    document.getElementById('login-user').value = '';
+    document.getElementById('login-pass').value = '';
+    
+    // Trigger reload
+    initDashboard();
+  }
+
+  let pollingStarted = false;
+  let serverOffline = false;
+
+  function initDashboard() {
+    if (!localStorage.getItem('proxy_admin_creds')) {
+      document.getElementById('login-overlay').style.display = 'flex';
+      return;
+    }
+    
+    // Initial fetch
+    refreshData();
+    
+    if (!pollingStarted) {
+      // Normal polling intervals - only run if server is online
+      setInterval(() => { if(!serverOffline) updateStats(); }, 2000);
+      setInterval(() => { if(!serverOffline) updateLogs(); }, 3000);
+      setInterval(() => { if(!serverOffline) loadCacheEntries(); }, 5000);
+      
+      // Heartbeat / Config sync - always runs once to detect recovery
+      setInterval(async () => {
+        try {
+          await loadConfig();
+          if (serverOffline) {
+            serverOffline = false;
+            console.log("Server reconnected. Resuming polling.");
+            refreshData();
+          }
+        } catch(e) {}
+      }, 5000);
+      
+      pollingStarted = true;
+    }
+  }
+
+  function refreshData() {
+    loadConfig(); updateStats(); updateLogs(); loadCacheEntries();
+  }
+
+  // ==========================================================================
+  // Tab Switching
+  // ==========================================================================
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      tab.classList.add('active');
+      document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+    });
+  });
+
+  // ==========================================================================
+  // Toast Helper
+  // ==========================================================================
+  function showToast(msg, type = 'success') {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = `show ${type}`;
+    setTimeout(() => { t.className = ''; }, 3500);
+  }
+
+  // ==========================================================================
+  // Stats Polling
+  // ==========================================================================
+  async function updateStats() {
+    try {
+      const r = await fetch('/api/stats');
+      const d = await r.json();
+
+      document.getElementById('total_requests').textContent = d.total_requests ?? 0;
+      document.getElementById('cache_hits').textContent     = d.cache_hits ?? 0;
+      document.getElementById('cache_misses').textContent   = d.cache_misses ?? 0;
+      document.getElementById('blocked').textContent        = d.blocked ?? 0;
+      document.getElementById('active_connections').textContent = d.active_connections ?? 0;
+      document.getElementById('peak_active_connections').textContent = d.peak_active_connections ?? 0;
+
+      const ut = d.uptime || 0;
+      const h = Math.floor(ut / 3600), m = Math.floor((ut % 3600) / 60), s = ut % 60;
+      const uptimeStr = h > 0 ? `${h}h ${m}m ${s}s` : m > 0 ? `${m}m ${s}s` : `${s}s uptime`;
+      document.getElementById('uptime-top').textContent = uptimeStr;
+
+      // Cache hit rate
+      const hits = d.cache_hits || 0;
+      const total = hits + (d.cache_misses || 0);
+      const rate = total > 0 ? Math.round((hits / total) * 100) : 0;
+      document.getElementById('hit-rate-pct').textContent = rate + '%';
+      document.getElementById('hit-rate-bar').style.width  = rate + '%';
+
+      // Cache tab
+      const disk = d.cache_disk || {};
+      document.getElementById('cache-entries').textContent = disk.entries ?? 0;
+      const kb = disk.size_bytes ? (disk.size_bytes / 1024).toFixed(1) : '0.0';
+      document.getElementById('cache-size').textContent    = `${kb} KB`;
+      document.getElementById('cache-ttl').textContent     = d.default_cache_ttl ? `${d.default_cache_ttl}s` : '—';
+      document.getElementById('proxy-port').textContent    = d.proxy_port ?? '—';
+    } catch(e) {}
+  }
+
+  // ==========================================================================
+  // Config / Security Rules
+  // ==========================================================================
+  let blacklist = [];
+  let whitelist = [];
+
+  async function loadConfig() {
+    try {
+      const r = await fetch('/api/config');
+      const d = await r.json();
+      blacklist = d.blacklist || [];
+      whitelist = d.whitelist || [];
+
+      const cacheStatus = d.cache_enabled ? '✅ Enabled' : '❌ Disabled';
+      document.getElementById('cache-status').textContent = cacheStatus;
+
+      renderChips();
+    } catch(e) {}
+  }
+
+  function renderChips() {
+    renderList('blacklist-chips', blacklist, true);
+    renderList('whitelist-chips', whitelist, false);
+  }
+
+  function renderList(containerId, list, isDanger) {
+    const c = document.getElementById(containerId);
+    if (!list.length) {
+      c.innerHTML = `<span class="empty-msg">${isDanger ? 'No domains blocked.' : 'No whitelist active — all non-blacklisted domains are allowed.'}</span>`;
+      return;
+    }
+    c.innerHTML = list.map((d, i) =>
+      `<span class="rule-chip ${isDanger ? 'danger-chip' : ''}">
+        ${d}
+        <span class="remove-btn" data-list="${isDanger ? 'bl' : 'wl'}" data-idx="${i}">✕</span>
+      </span>`
+    ).join('');
+    c.querySelectorAll('.remove-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const idx = parseInt(btn.dataset.idx);
+        if (btn.dataset.list === 'bl') blacklist.splice(idx, 1);
+        else whitelist.splice(idx, 1);
+        renderChips();
+      });
+    });
+  }
+
+  function addToList(listRef, inputId) {
+    const input = document.getElementById(inputId);
+    const val = input.value.trim().toLowerCase();
+    if (val && !listRef.includes(val)) {
+      listRef.push(val);
+      renderChips();
+    }
+    input.value = '';
+  }
+
+  document.getElementById('bl-add-btn').addEventListener('click', () => addToList(blacklist, 'bl-input'));
+  document.getElementById('wl-add-btn').addEventListener('click', () => addToList(whitelist, 'wl-input'));
+  document.getElementById('bl-input').addEventListener('keydown', e => { if (e.key === 'Enter') addToList(blacklist, 'bl-input'); });
+  document.getElementById('wl-input').addEventListener('keydown', e => { if (e.key === 'Enter') addToList(whitelist, 'wl-input'); });
+
+  document.getElementById('save-rules-btn').addEventListener('click', async () => {
+    try {
+      const r = await fetch('/api/config', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ blacklist, whitelist })
+      });
+      const d = await r.json();
+      showToast(d.message, d.success ? 'success' : 'error');
+    } catch(e) {
+      showToast('Failed to save rules.', 'error');
+    }
+  });
+
+  // ==========================================================================
+  // Cache Clear & Table
+  // ==========================================================================
+  document.getElementById('clear-cache-btn').addEventListener('click', async () => {
+    try {
+      const r = await fetch('/api/cache/clear', { method: 'POST' });
+      const d = await r.json();
+      showToast(d.message, 'success');
+      updateStats();
+      loadCacheEntries();
+    } catch(e) {
+      showToast('Failed to clear cache.', 'error');
+    }
+  });
+
+  async function loadCacheEntries() {
+    try {
+      const r = await fetch('/api/cache/entries');
+      if (r.status === 401) return;
+      const data = await r.json();
+      const tbody = document.getElementById('cache-entries-body');
+      
+      if (!data || data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--muted); padding: 2rem;">Cache is empty.</td></tr>';
+        return;
+      }
+      
+      const now = Date.now() / 1000;
+      tbody.innerHTML = data.map(entry => {
+        const kb = (entry.size_bytes / 1024).toFixed(1);
+        const ttl = Math.max(0, Math.floor(entry.expires_at - now));
+        return `
+          <tr>
+            <td class="url-col" title="${entry.url}">${entry.url}</td>
+            <td>${kb} KB</td>
+            <td>${ttl}s</td>
+            <td><button class="btn btn-danger btn-sm" onclick="deleteCacheEntry('${entry.url}')">Delete</button></td>
+          </tr>
+        `;
+      }).join('');
+    } catch(e) {}
+  }
+
+  window.deleteCacheEntry = async function(url) {
+    try {
+      const r = await fetch('/api/cache/entries', {
+        method: 'DELETE',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ url })
+      });
+      const d = await r.json();
+      showToast(d.message, d.success ? 'success' : 'error');
+      if (d.success) {
+        loadCacheEntries();
+        updateStats();
+      }
+    } catch(e) {
+      showToast('Failed to delete entry.', 'error');
+    }
+  };
+
+  document.getElementById('refresh-cache-btn').addEventListener('click', loadCacheEntries);
+
+  // ==========================================================================
+  // Live Logs
+  // ==========================================================================
+  async function updateLogs() {
+    try {
+      const r = await fetch('/api/logs');
+      const lines = await r.json();
+      const box = document.getElementById('log-box');
+      document.getElementById('log-count').textContent = `${lines.length} entries`;
+
+      box.innerHTML = lines.slice().reverse().map(line => {
+        let cls = '';
+        const l = line.toUpperCase();
+        if (l.includes('HIT'))    cls = 'hit';
+        else if (l.includes('MISS') || l.includes('FORWARD')) cls = 'miss';
+        else if (l.includes('BLOCK') || l.includes('FORBIDDEN')) cls = 'block';
+        else if (l.includes('CONNECT') || l.includes('TUNNEL')) cls = 'connect';
+        else if (l.includes('ERROR')) cls = 'error';
+        return `<div class="log-line ${cls}">${escHtml(line)}</div>`;
+      }).join('') || '<div class="log-line">No log entries yet.</div>';
+    } catch(e) {}
+  }
+
+  function escHtml(str) {
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  // ==========================================================================
+  // Initial Boot
+  // ==========================================================================
+  initDashboard();
+</script>
+</body>
+</html>

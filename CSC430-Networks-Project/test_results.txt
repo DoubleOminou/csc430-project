@@ -1,0 +1,81 @@
+﻿============================================================      
+CSC430 Caching Proxy Server - Verification Suite
+============================================================      
+
+Proxy Server Connectivity
+[PASS] Proxy binds on port 8888
+
+HTTP Forwarding (Requirement A + B + C)
+[PASS] HTTP GET forwarded to example.com - 838 bytes received
+[PASS] Response contains HTTP status line
+[PASS] Response has body content - HTML content found
+
+Cache Behavior (Requirement F)
+[PASS] First request returns data - 0.13s
+[PASS] Second request served (cache or live) - 0.13s
+[PASS] Cache speeds up repeated requests - 1st=0.13s 2nd=0.13s    
+
+HTTPS CONNECT Tunnel (Requirement A BONUS)
+[PASS] HTTPS CONNECT tunnel established - HTTP/1.1 200 Connection Established
+
+Blacklist Filtering (Requirement G)
+[PASS] Blacklisted domain returns 403 - HTTP/1.1 403 Forbidden
+[PASS] 403 response has body
+
+Malformed Request Handling (Robustness)
+[PASS] Server handles empty request without crashing
+
+Admin Dashboard API (Bonus Requirement I)
+[PASS] GET /api/stats returns data - total_requests=14
+[PASS] Stats include cache fields
+[PASS] Stats include uptime
+[PASS] Stats include active_connections
+[PASS] GET /api/logs returns list - 14 log lines
+[PASS] GET /api/config returns blacklist + whitelist
+[PASS] Config includes proxy_port
+
+============================================================      
+Results: 18/18 passedAll tests passed!
+============================================================      
+
+PS D:\Projects\CSC430-Networks-Project> python test_proxy.py
+
+============================================================      
+CSC430 Caching Proxy Server - Verification Suite
+============================================================      
+
+Proxy Server Connectivity
+[PASS] Proxy binds on port 8888
+
+HTTP Forwarding (Requirement A + B + C)
+[PASS] HTTP GET forwarded to example.com - 838 bytes received
+[PASS] Response contains HTTP status line
+[PASS] Response has body content - HTML content found
+
+Cache Behavior (Requirement F)
+[PASS] First request returns data - 0.45s
+[PASS] Second request served (cache or live) - 0.15s
+[PASS] Cache speeds up repeated requests - 1st=0.45s 2nd=0.15s    
+
+HTTPS CONNECT Tunnel (Requirement A BONUS)
+[PASS] HTTPS CONNECT tunnel established - HTTP/1.1 200 Connection Established
+
+Blacklist Filtering (Requirement G)
+[PASS] Blacklisted domain returns 403 - HTTP/1.1 403 Forbidden    
+[PASS] 403 response has body
+
+Malformed Request Handling (Robustness)
+[PASS] Server handles empty request without crashing
+
+Admin Dashboard API (Bonus Requirement I)
+[PASS] GET /api/stats returns data - total_requests=21
+[PASS] Stats include cache fields
+[PASS] Stats include uptime
+[PASS] Stats include active_connections
+[PASS] GET /api/logs returns list - 20 log lines
+[PASS] GET /api/config returns blacklist + whitelist
+[PASS] Config includes proxy_port
+
+============================================================      
+Results: 18/18 passedAll tests passed!
+============================================================ 

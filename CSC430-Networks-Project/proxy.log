@@ -1,0 +1,50 @@
+[2026-04-15 20:04:04] 127.0.0.1:54795 -> example.com:80 | GET | http://example.com/ | FORWARDING
+[2026-04-15 20:04:04] 127.0.0.1:54795 -> example.com:80 | GET | http://example.com/ | CACHED
+[2026-04-15 20:04:04] 127.0.0.1:10420 -> example.com:80 | GET | http://example.com/cache-test | FORWARDING
+[2026-04-15 20:04:04] 127.0.0.1:10422 -> example.com:80 | GET | http://example.com/cache-test | FORWARDING
+[2026-04-15 20:04:04] 127.0.0.1:21455 -> example.com:443 | CONNECT | example.com:443 | TUNNEL ESTABLISHING
+[2026-04-15 20:04:04] 127.0.0.1:21455 -> example.com:443 | CONNECT | example.com:443 | TUNNEL ACTIVE
+[2026-04-15 20:04:04] 127.0.0.1:21457 -> blocked-test-domain.example:80 | GET | http://blocked-test-domain.example/ | FORWARDING
+[2026-04-15 20:04:05] ERROR: Failed to forward HTTP request to http://blocked-test-domain.example/: [Errno 11001] getaddrinfo failed
+[2026-04-15 20:04:42] 127.0.0.1:40631 -> CACHE HIT | GET | http://example.com/ | 200 OK (cached)
+[2026-04-15 20:04:42] 127.0.0.1:40632 -> example.com:80 | GET | http://example.com/cache-test | FORWARDING
+[2026-04-15 20:04:42] 127.0.0.1:40634 -> example.com:80 | GET | http://example.com/cache-test | FORWARDING
+[2026-04-15 20:04:42] 127.0.0.1:40636 -> example.com:443 | CONNECT | example.com:443 | TUNNEL ESTABLISHING
+[2026-04-15 20:04:42] 127.0.0.1:40636 -> example.com:443 | CONNECT | example.com:443 | TUNNEL ACTIVE
+[2026-04-15 20:04:42] 127.0.0.1:40638 -> BLOCKED | GET | http://blocked-test-domain.example/ | 403 FORBIDDEN
+[2026-04-15 20:04:51] 127.0.0.1:50397 -> CACHE HIT | GET | http://example.com/ | 200 OK (cached)
+[2026-04-15 20:04:51] 127.0.0.1:50398 -> example.com:80 | GET | http://example.com/cache-test | FORWARDING
+[2026-04-15 20:04:51] 127.0.0.1:8918 -> example.com:80 | GET | http://example.com/cache-test | FORWARDING
+[2026-04-15 20:04:51] 127.0.0.1:8920 -> example.com:443 | CONNECT | example.com:443 | TUNNEL ESTABLISHING
+[2026-04-15 20:04:51] 127.0.0.1:8920 -> example.com:443 | CONNECT | example.com:443 | TUNNEL ACTIVE
+[2026-04-15 20:04:51] 127.0.0.1:8922 -> BLOCKED | GET | http://blocked-test-domain.example/ | 403 FORBIDDEN
+[2026-04-15 20:07:49] 127.0.0.1:21194 -> CACHE HIT | GET | http://example.com/ | 200 OK (cached)
+[2026-04-15 20:07:49] 127.0.0.1:21195 -> example.com:80 | GET | http://example.com/cache-test | FORWARDING
+[2026-04-15 20:07:49] 127.0.0.1:21197 -> example.com:80 | GET | http://example.com/cache-test | FORWARDING
+[2026-04-15 20:07:49] 127.0.0.1:21199 -> example.com:443 | CONNECT | example.com:443 | TUNNEL ESTABLISHING
+[2026-04-15 20:07:49] 127.0.0.1:21199 -> example.com:443 | CONNECT | example.com:443 | TUNNEL ACTIVE
+[2026-04-15 20:07:49] 127.0.0.1:21201 -> BLOCKED | GET | http://blocked-test-domain.example/ | 403 FORBIDDEN
+[2026-04-15 20:07:58] 127.0.0.1:42647 -> CACHE HIT | GET | http://example.com/ | 200 OK (cached)
+[2026-04-15 20:07:58] 127.0.0.1:42648 -> example.com:80 | GET | http://example.com/cache-test | FORWARDING
+[2026-04-15 20:07:58] 127.0.0.1:3143 -> example.com:80 | GET | http://example.com/cache-test | FORWARDING
+[2026-04-15 20:07:58] 127.0.0.1:3145 -> example.com:443 | CONNECT | example.com:443 | TUNNEL ESTABLISHING
+[2026-04-15 20:07:58] 127.0.0.1:3145 -> example.com:443 | CONNECT | example.com:443 | TUNNEL ACTIVE
+[2026-04-15 20:07:58] 127.0.0.1:3147 -> BLOCKED | GET | http://blocked-test-domain.example/ | 403 FORBIDDEN
+[2026-04-15 20:08:03] 127.0.0.1:25962 -> CACHE HIT | GET | http://example.com/ | 200 OK (cached)
+[2026-04-15 20:08:03] 127.0.0.1:25963 -> example.com:80 | GET | http://example.com/cache-test | FORWARDING
+[2026-04-15 20:08:03] 127.0.0.1:25965 -> example.com:80 | GET | http://example.com/cache-test | FORWARDING
+[2026-04-15 20:08:04] 127.0.0.1:10721 -> example.com:443 | CONNECT | example.com:443 | TUNNEL ESTABLISHING
+[2026-04-15 20:08:04] 127.0.0.1:10721 -> example.com:443 | CONNECT | example.com:443 | TUNNEL ACTIVE
+[2026-04-15 20:08:04] 127.0.0.1:10723 -> BLOCKED | GET | http://blocked-test-domain.example/ | 403 FORBIDDEN
+[2026-04-15 20:08:11] 127.0.0.1:60358 -> CACHE HIT | GET | http://example.com/ | 200 OK (cached)
+[2026-04-15 20:08:11] 127.0.0.1:60359 -> example.com:80 | GET | http://example.com/cache-test | FORWARDING
+[2026-04-15 20:08:11] 127.0.0.1:37674 -> example.com:80 | GET | http://example.com/cache-test | FORWARDING
+[2026-04-15 20:08:17] 127.0.0.1:57946 -> example.com:443 | CONNECT | example.com:443 | TUNNEL ESTABLISHING
+[2026-04-15 20:08:17] 127.0.0.1:57946 -> example.com:443 | CONNECT | example.com:443 | TUNNEL ACTIVE
+[2026-04-15 20:08:17] 127.0.0.1:57948 -> BLOCKED | GET | http://blocked-test-domain.example/ | 403 FORBIDDEN
+[2026-04-15 20:08:28] 127.0.0.1:35115 -> CACHE HIT | GET | http://example.com/ | 200 OK (cached)
+[2026-04-15 20:08:28] 127.0.0.1:35116 -> example.com:80 | GET | http://example.com/cache-test | FORWARDING
+[2026-04-15 20:08:28] 127.0.0.1:23193 -> example.com:80 | GET | http://example.com/cache-test | FORWARDING
+[2026-04-15 20:08:28] 127.0.0.1:23195 -> example.com:443 | CONNECT | example.com:443 | TUNNEL ESTABLISHING
+[2026-04-15 20:08:28] 127.0.0.1:23195 -> example.com:443 | CONNECT | example.com:443 | TUNNEL ACTIVE
+[2026-04-15 20:08:28] 127.0.0.1:23197 -> BLOCKED | GET | http://blocked-test-domain.example/ | 403 FORBIDDEN
